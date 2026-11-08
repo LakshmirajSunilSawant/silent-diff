@@ -11,7 +11,18 @@ interface Props {
   onExport: (kind: 'xlsx' | 'csv') => void;
   exporting: boolean;
   stale: boolean;
+  onRename: (from: string, to: string) => void;
+  onUnrename: (from: string) => void;
 }
+
+/** One rendered column: a unified cell, the Before or After half in side-by-side mode, or the divider. */
+interface Slot {
+  ci: number;
+  side: 'u' | 'b' | 'a' | 'div';
+  w: number;
+  left?: number;
+}
+type ViewMode = 'unified' | 'split';
 
 type Line = { kind: 'op'; i: number } | { kind: 'gap'; from: number; to: number };
 type ChangeType = Exclude<OpType, 'unchanged'>;
@@ -20,6 +31,9 @@ const CONTEXT = 3;
 const ROW_H = 30;
 const HEAD_H = 50;
 const MARK_W = 84;
+const DIV_W = 12;
+// Narrower columns in side-by-side mode so more of both halves fit on screen.
+const SPLIT_MAX_W = 170;
 const ALL_TYPES: ChangeType[] = ['added', 'deleted', 'modified'];
 
 const SYMBOL: Record<OpType, string> = { added: '+', deleted: '−', modified: '~', unchanged: '' };
@@ -28,12 +42,26 @@ const SR_LABEL: Record<OpType, string> = { added: 'Added row', deleted: 'Deleted
 const fmt = (n: number) => n.toLocaleString();
 const fmtNet = (n: number) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 4 });
 
-export function DiffView({ result, before, after, onExport, exporting, stale }: Props) {
+export function DiffView({ result, before, after, onExport, exporting, stale, onRename, onUnrename }: Props) {
   const r = result;
   const s = r.summary;
   const [types, setTypes] = useState<Set<ChangeType>>(new Set(ALL_TYPES));
   const [colFilter, setColFilter] = useState(-1);
   const [showOld, setShowOld] = useState(false);
+  const [mode, setMode] = useState<ViewMode>(() => {
+    try {
+      return localStorage.getItem('silent-diff:view') === 'split' ? 'split' : 'unified';
+    } catch {
+      return 'unified';
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('silent-diff:view', mode);
+    } catch {
+      /* ignore */
+    }
+  }, [mode]);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [cursor, setCursor] = useState(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,28 +81,42 @@ export function DiffView({ result, before, after, onExport, exporting, stale }: 
   }, [r]);
   const keyCount = r.key?.length ?? 0;
 
-  const widths = useMemo(() => {
-    return displayCols.map((ci) => {
+  const baseWidth = useMemo(() => {
+    const w = new Map<number, number>();
+    for (const ci of displayCols) {
       const c = r.columns[ci];
-      let len = c.name.length + (c.status !== 'both' ? 6 : 0);
+      let len = c.name.length + (c.status !== 'both' || c.renamedFrom ? 6 : 0);
       const t = c.ai >= 0 ? after : before;
       const col = t.columns[c.ai >= 0 ? c.ai : c.bi];
       for (let i = 0; i < Math.min(col.length, 300); i++) len = Math.max(len, col[i].length);
-      const w = Math.max(90, Math.min(300, len * 8 + 28));
-      // Room for "old → new" when old values are shown inline.
-      return showOld && (s.perColumn.find((p) => p.column === c.name)?.changed ?? 0) > 0 ? Math.min(460, w * 2) : w;
-    });
-  }, [r, s, displayCols, before, after, showOld]);
-  const stickyLeft = useMemo(() => {
-    const out: number[] = [];
+      w.set(ci, Math.max(90, Math.min(300, len * 8 + 28)));
+    }
+    return w;
+  }, [r, displayCols, before, after]);
+
+  const slots = useMemo<Slot[]>(() => {
+    let out: Slot[];
+    if (mode === 'split') {
+      const b = displayCols.filter((ci) => r.columns[ci].bi >= 0).map((ci): Slot => ({ ci, side: 'b', w: Math.min(SPLIT_MAX_W, baseWidth.get(ci)!) }));
+      const a = displayCols.filter((ci) => r.columns[ci].ai >= 0).map((ci): Slot => ({ ci, side: 'a', w: Math.min(SPLIT_MAX_W, baseWidth.get(ci)!) }));
+      out = [...b, { ci: -1, side: 'div', w: DIV_W }, ...a];
+    } else {
+      out = displayCols.map((ci): Slot => {
+        const w = baseWidth.get(ci)!;
+        // Room for "old -> new" when old values are shown inline.
+        const changed = (s.perColumn.find((p) => p.column === r.columns[ci].name)?.changed ?? 0) > 0;
+        return { ci, side: 'u', w: showOld && changed ? Math.min(460, w * 2) : w };
+      });
+    }
+    // Key columns come first in both modes and stick to the left edge.
     let x = MARK_W;
-    for (let i = 0; i < keyCount; i++) {
-      out.push(x);
-      x += widths[i];
+    for (let k = 0; k < keyCount && k < out.length; k++) {
+      out[k] = { ...out[k], left: x };
+      x += out[k].w;
     }
     return out;
-  }, [widths, keyCount]);
-  const totalW = MARK_W + widths.reduce((a, b) => a + b, 0);
+  }, [mode, displayCols, baseWidth, r, s, showOld, keyCount]);
+  const totalW = MARK_W + slots.reduce((a, sl) => a + sl.w, 0);
 
   const perCol = useMemo(() => new Map(s.perColumn.map((p) => [p.column, p])), [s]);
   const filterActive = types.size < 3 || colFilter >= 0;
@@ -205,6 +247,7 @@ export function DiffView({ result, before, after, onExport, exporting, stale }: 
         )}
       </div>
 
+      <Renames result={r} onRename={onRename} onUnrename={onUnrename} />
       <Issues result={r} before={before} after={after} />
 
       {identical ? (
@@ -233,10 +276,20 @@ export function DiffView({ result, before, after, onExport, exporting, stale }: 
                   </option>
                 ))}
               </select>
-              <label className="switch">
-                <input type="checkbox" checked={showOld} onChange={(e) => setShowOld(e.target.checked)} />
-                Show old values inline
-              </label>
+              <div className="seg" role="radiogroup" aria-label="View">
+                <button role="radio" aria-checked={mode === 'unified'} className={mode === 'unified' ? 'on' : ''} onClick={() => setMode('unified')}>
+                  Unified
+                </button>
+                <button role="radio" aria-checked={mode === 'split'} className={mode === 'split' ? 'on' : ''} onClick={() => setMode('split')}>
+                  Side by side
+                </button>
+              </div>
+              {mode === 'unified' && (
+                <label className="switch">
+                  <input type="checkbox" checked={showOld} onChange={(e) => setShowOld(e.target.checked)} />
+                  Show old values inline
+                </label>
+              )}
             </div>
             <div className="nav">
               <button onClick={() => jump(-1)} disabled={!changeLines.length} title="Previous change (p)">
@@ -254,26 +307,32 @@ export function DiffView({ result, before, after, onExport, exporting, stale }: 
             </div>
           </div>
 
-          <div className="grid-scroll" ref={scrollRef} role="grid" aria-rowcount={lines.length + 1} aria-colcount={displayCols.length + 1} tabIndex={0}>
+          <div className={`grid-scroll ${mode === 'split' ? 'split' : ''}`} ref={scrollRef} role="grid" aria-rowcount={lines.length + 1} aria-colcount={slots.length + 1} tabIndex={0}>
             <div style={{ width: totalW, height: virt.getTotalSize() + HEAD_H, position: 'relative' }}>
               <div className="grid-head" role="row" style={{ width: totalW, height: HEAD_H }}>
                 <div className="hcell mark sticky" role="columnheader" style={{ width: MARK_W, left: 0 }}>
                   Change
                 </div>
-                {displayCols.map((ci, k) => {
-                  const c = r.columns[ci];
+                {slots.map((sl, k) => {
+                  if (sl.side === 'div') return <div key="div" className="hcell divider" style={{ width: sl.w }} aria-hidden="true" />;
+                  const c = r.columns[sl.ci];
                   const n = perCol.get(c.name)?.changed ?? 0;
+                  const firstOfSide = sl.side !== 'u' && (k === 0 || slots[k - 1].side !== sl.side);
                   return (
                     <div
-                      key={ci}
+                      key={`${sl.side}${sl.ci}`}
                       role="columnheader"
-                      className={`hcell h-${c.status} ${k < keyCount ? 'sticky key' : ''}`}
-                      style={{ width: widths[k], left: k < keyCount ? stickyLeft[k] : undefined }}
-                      title={c.name}
+                      className={`hcell h-${c.status} ${sl.left !== undefined ? 'sticky key' : ''} ${sl.side !== 'u' ? `hs-${sl.side}` : ''}`}
+                      style={{ width: sl.w, left: sl.left }}
+                      title={c.renamedFrom ? `${c.name} (was “${c.renamedFrom}” in Before)` : c.name}
                     >
-                      <span className="hname">{c.name}</span>
+                      <span className="hname">
+                        {firstOfSide && <span className={`side-tag st-${sl.side}`}>{sl.side === 'b' ? 'Before' : 'After'}</span>}
+                        {sl.side === 'b' && c.renamedFrom ? c.renamedFrom : c.name}
+                      </span>
                       <span className="hmeta">
-                        {k < keyCount && <span className="badge b-key">key</span>}
+                        {sl.left !== undefined && <span className="badge b-key">key</span>}
+                        {c.renamedFrom && sl.side !== 'b' && <span className="badge b-ren">was {c.renamedFrom}</span>}
                         {c.status === 'added' && <span className="badge b-add">+ new column</span>}
                         {c.status === 'removed' && <span className="badge b-del">− removed</span>}
                         {n > 0 && <span className="badge b-mod">{fmt(n)} changed</span>}
@@ -306,10 +365,7 @@ export function DiffView({ result, before, after, onExport, exporting, stale }: 
                     result={r}
                     before={before}
                     after={after}
-                    displayCols={displayCols}
-                    widths={widths}
-                    stickyLeft={stickyLeft}
-                    keyCount={keyCount}
+                    slots={slots}
                     showOld={showOld}
                     cursor={item.index === cursor}
                     rowIndex={item.index + 2}
@@ -335,16 +391,15 @@ interface RowProps {
   result: DiffResult;
   before: Table;
   after: Table;
-  displayCols: number[];
-  widths: number[];
-  stickyLeft: number[];
-  keyCount: number;
+  slots: Slot[];
   showOld: boolean;
   cursor: boolean;
   rowIndex: number;
 }
 
-function Row({ op, top, width, result, before, after, displayCols, widths, stickyLeft, keyCount, showOld, cursor, rowIndex }: RowProps) {
+const longTitle = (v: string) => (v.length > 30 || v.includes('\n') ? v : undefined);
+
+function Row({ op, top, width, result, before, after, slots, showOld, cursor, rowIndex }: RowProps) {
   const changed = op.type === 'modified' ? new Set(op.changed) : null;
   const where =
     op.type === 'added'
@@ -363,16 +418,40 @@ function Row({ op, top, width, result, before, after, displayCols, widths, stick
         <span className="sr-only">{SR_LABEL[op.type]}, </span>
         <span className="rownum">{(op.a >= 0 ? op.a : op.b) + 1}</span>
       </div>
-      {displayCols.map((ci, k) => {
-        const col = result.columns[ci];
+      {slots.map((sl) => {
+        if (sl.side === 'div') return <div key="div" className="cell divider" style={{ width: sl.w }} aria-hidden="true" />;
+        const col = result.columns[sl.ci];
+        const isChanged = changed?.has(sl.ci) ?? false;
+        const style = { width: sl.w, left: sl.left };
+        const base = `cell c-${col.status} s-${sl.side} ${sl.left !== undefined ? 'sticky key' : ''}`;
+        const key = `${sl.side}${sl.ci}`;
+
+        if (sl.side === 'b' || sl.side === 'a') {
+          // Side by side: each half shows its own file's value, or a hatched blank when the row isn't there.
+          const t = sl.side === 'b' ? before : after;
+          const row = sl.side === 'b' ? op.b : op.a;
+          const ti = sl.side === 'b' ? col.bi : col.ai;
+          if (row < 0 || ti < 0) return <div key={key} role="gridcell" className={`${base} void`} style={style} aria-label="not in this file" />;
+          const v = t.columns[ti][row];
+          return (
+            <div key={key} role="gridcell" className={`${base} ${isChanged ? (sl.side === 'b' ? 'changed was' : 'changed') : ''}`} style={style} title={longTitle(v)}>
+              {isChanged && v === '' ? <span className="emptyval">(empty)</span> : v}
+            </div>
+          );
+        }
+
         const v = cellValue(col, op, before, after);
-        const isChanged = changed?.has(ci) ?? false;
-        const cls = `cell c-${col.status} ${k < keyCount ? 'sticky key' : ''} ${isChanged ? 'changed' : ''}`;
-        const style = { width: widths[k], left: k < keyCount ? stickyLeft[k] : undefined };
         if (isChanged) {
           const old = oldValue(col, op, before);
           return (
-            <div key={ci} role="gridcell" className={cls} style={style} title={`Before: ${old || '(empty)'}\nAfter: ${v || '(empty)'}`} aria-label={`${col.name} changed from ${old || 'empty'} to ${v || 'empty'}`}>
+            <div
+              key={key}
+              role="gridcell"
+              className={`${base} changed`}
+              style={style}
+              title={`Before: ${old || '(empty)'}\nAfter: ${v || '(empty)'}`}
+              aria-label={`${col.name} changed from ${old || 'empty'} to ${v || 'empty'}`}
+            >
               {showOld && (
                 <>
                   <del className="old">{old || '∅'}</del>
@@ -384,11 +463,36 @@ function Row({ op, top, width, result, before, after, displayCols, widths, stick
           );
         }
         return (
-          <div key={ci} role="gridcell" className={cls} style={style} title={v.length > 30 || v.includes('\n') ? v : undefined}>
+          <div key={key} role="gridcell" className={base} style={style} title={longTitle(v)}>
             {v}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function Renames({ result: r, onRename, onUnrename }: { result: DiffResult; onRename: Props['onRename']; onUnrename: Props['onUnrename'] }) {
+  const accepted = r.columns.filter((c) => c.renamedFrom);
+  if (!r.renameSuggestions.length && !accepted.length) return null;
+  return (
+    <div className="issues">
+      {r.renameSuggestions.map((sg) => (
+        <div key={`${sg.from}>${sg.to}`} className="banner info">
+          Column <code>{sg.from}</code> looks renamed to <code>{sg.to}</code> ({Math.round(sg.similarity * 100)}% of values match).{' '}
+          <button className="chip" onClick={() => onRename(sg.from, sg.to)}>
+            Treat as the same column
+          </button>
+        </div>
+      ))}
+      {accepted.map((c) => (
+        <div key={c.renamedFrom} className="banner info">
+          Comparing <code>{c.renamedFrom}</code> (Before) with <code>{c.name}</code> (After) as one renamed column.{' '}
+          <button className="link" onClick={() => onUnrename(c.renamedFrom!)}>
+            Undo
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

@@ -83,6 +83,8 @@ export async function exportXlsx(r: DiffResult, before: Table, after: Table, pal
     ['Matched rows by', r.key ? r.key.join(' + ') : 'row alignment (no key)'],
     ['Normalization', describeNormalize(r.normalize)],
   ];
+  const renamed = r.columns.filter((c) => c.renamedFrom);
+  if (renamed.length) rows.push(['Renamed columns', renamed.map((c) => `${c.renamedFrom} → ${c.name}`).join(', ')]);
   if (s.unmatchable) rows.push(['Rows not matched (duplicate or empty key)', s.unmatchable]);
   if (r.approximate) rows.push(['Note', 'Large keyless diff: alignment is approximate']);
   const title = sum.addRow(['Silent-Diff report']);
@@ -111,6 +113,8 @@ export async function exportXlsx(r: DiffResult, before: Table, after: Table, pal
     } else if (c.status === 'removed') {
       cell.fill = fill(colors.del);
       cell.value = `${c.name} (removed column)`;
+    } else if (c.renamedFrom) {
+      cell.value = `${c.name} (was ${c.renamedFrom})`;
     }
   });
 

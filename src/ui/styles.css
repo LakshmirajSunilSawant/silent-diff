@@ -717,3 +717,83 @@ details summary {
     display: none;
   }
 }
+
+/* ---------- P2: tolerance, renames, side-by-side */
+.tolerance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.tolerance input {
+  width: 72px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+}
+.banner.info {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+.b-ren {
+  background: var(--surface-2);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+.seg {
+  display: inline-flex;
+}
+.seg button {
+  border-radius: 0;
+  padding: 4px 12px;
+}
+.seg button:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.seg button:last-child {
+  border-radius: 0 6px 6px 0;
+  border-left: none;
+}
+.seg button.on {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+.side-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 6px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.hcell.divider,
+.cell.divider {
+  flex: none;
+  padding: 0;
+  background: var(--border);
+}
+.cell.void {
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface) 6px 12px);
+  text-decoration: none;
+}
+.cell.changed.was {
+  color: var(--del-strong);
+}
+.split .r-added .cell.s-a:not(.void),
+.split .r-added .cell.mark {
+  background: var(--add-bg);
+}
+.split .r-deleted .cell.s-b:not(.void),
+.split .r-deleted .cell.mark {
+  background: var(--del-bg);
+}
+.split .r-added,
+.split .r-deleted {
+  background: var(--surface);
+}

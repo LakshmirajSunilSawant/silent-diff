@@ -39,12 +39,15 @@ export function App() {
 
   const [slots, setSlots] = useState<Record<Side, FileSlot | null>>({ before: null, after: null });
   const [hasHeader, setHasHeader] = useState(true);
-  const [normalize, setNormalize] = useState<NormalizeOptions>(() => loadPref('normalize', DEFAULT_NORMALIZE));
+  // Merge with defaults so settings saved by an older version gain new fields.
+  const [normalize, setNormalize] = useState<NormalizeOptions>(() => ({ ...DEFAULT_NORMALIZE, ...loadPref('normalize', {}) }));
   const [palette, setPalette] = useState<Palette>(() => loadPref('palette', 'default'));
   const [detection, setDetection] = useState<KeyDetection | null>(null);
   /** undefined: waiting for the user to pick; null: align without a key. */
   const [key, setKey] = useState<string[] | null | undefined>(undefined);
   const [result, setResult] = useState<DiffResult | null>(null);
+  /** Columns the user chose to treat as renamed: Before name → After name. */
+  const [renames, setRenames] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -60,6 +63,7 @@ export function App() {
   const after = slots.after?.table;
 
   const resetDiff = () => {
+    setRenames({});
     setDetection(null);
     setKey(undefined);
     setResult(null);
@@ -138,13 +142,13 @@ export function App() {
     const seq = ++diffSeq.current;
     setBusy('Comparing…');
     worker.current!
-      .send<'diffed'>({ type: 'diff', key, normalize })
+      .send<'diffed'>({ type: 'diff', key, normalize, renames })
       .then(({ result: r }) => {
         if (seq === diffSeq.current) setResult(r);
       })
       .catch((e) => setError(e.message))
       .finally(() => seq === diffSeq.current && setBusy(null));
-  }, [before, after, detection, key, normalize]);
+  }, [before, after, detection, key, normalize, renames]);
 
   const loadSamples = async () => {
     const { before: b, after: a } = sampleFiles();
@@ -219,7 +223,22 @@ export function App() {
         )}
 
         {bothLoaded && result && key !== undefined && (
-          <DiffView result={result} before={before} after={after} onExport={doExport} exporting={exporting} stale={!!busy} />
+          <DiffView
+            result={result}
+            before={before}
+            after={after}
+            onExport={doExport}
+            exporting={exporting}
+            stale={!!busy}
+            onRename={(from, to) => setRenames((r) => ({ ...r, [from]: to }))}
+            onUnrename={(from) =>
+              setRenames((r) => {
+                const next = { ...r };
+                delete next[from];
+                return next;
+              })
+            }
+          />
         )}
       </main>
 

@@ -22,6 +22,10 @@ Options:
   --ignore-case    Ignore letter case.
   --numeric        Compare numbers numerically (1,000.00 = 1000).
   --null-equal     Treat empty, NULL, N/A, - as equal.
+  --dates          Compare dates by calendar day (2024-01-05 = 1/5/2024).
+  --dmy            Read ambiguous dates as day/month/year (default month/day/year).
+  --tolerance <n>  Numbers within n count as equal; add % for relative (e.g. 0.5%).
+  --rename <a=b>   Treat Before column a and After column b as one column. Repeatable.
   --no-header      First row is data, not headers.
   -h, --help       Show this help.
 
@@ -41,10 +45,12 @@ async function main() {
     return 0;
   }
   const files: string[] = [];
+  const renames: string[] = [];
   const flags = new Map<string, string | true>();
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === '--key' || a === '--limit') flags.set(a, args[++i] ?? '');
+    if (a === '--rename') renames.push(args[++i] ?? '');
+    else if (a === '--key' || a === '--limit' || a === '--tolerance') flags.set(a, args[++i] ?? '');
     else if (a.startsWith('--')) flags.set(a, true);
     else files.push(a);
   }
@@ -70,8 +76,17 @@ async function main() {
     ignoreCase: flags.has('--ignore-case'),
     numeric: flags.has('--numeric'),
     nullEqual: flags.has('--null-equal'),
+    dates: flags.has('--dates'),
+    dateOrder: flags.has('--dmy') ? ('DMY' as const) : ('MDY' as const),
+    ...parseTolerance(flags.get('--tolerance')),
   };
-  const result = diffTables(before, after, { key, normalize });
+  const renameMap: Record<string, string> = {};
+  for (const r of renames) {
+    const [from, to] = r.split('=');
+    if (!from || !to) throw new Error(`--rename expects before=after, got "${r}".`);
+    renameMap[from.trim()] = to.trim();
+  }
+  const result = diffTables(before, after, { key, normalize, renames: renameMap });
   const s = result.summary;
   const differs = s.added + s.deleted + s.modified + s.columnsAdded.length + s.columnsRemoved.length > 0;
 
@@ -84,6 +99,14 @@ async function main() {
   const limit = typeof limitFlag === 'string' ? Number(limitFlag) : 50;
   printTable(result, before, after, limit, keyNote);
   return differs ? 1 : 0;
+}
+
+function parseTolerance(v: string | true | undefined): { tolerance: number; toleranceMode: 'abs' | 'pct' } {
+  if (typeof v !== 'string' || !v) return { tolerance: 0, toleranceMode: 'abs' };
+  const pct = v.trim().endsWith('%');
+  const n = Number(v.replace('%', ''));
+  if (!Number.isFinite(n) || n < 0) throw new Error(`--tolerance expects a number like 0.01 or 0.5%, got "${v}".`);
+  return { tolerance: n, toleranceMode: pct ? 'pct' : 'abs' };
 }
 
 function rowRecord(t: Table, r: number): Record<string, string> {
@@ -143,6 +166,9 @@ function printTable(r: DiffResult, before: Table, after: Table, limit: number, k
   console.log(dim(`${s.unchanged} unchanged · ${r.key ? `matched by ${r.key.join(' + ')}` : 'aligned without a key'} · ${describeNormalize(r.normalize)} · ${r.elapsedMs} ms`));
   for (const w of [keyNote, ...r.warnings, ...before.warnings.map((x) => `Before: ${x}`), ...after.warnings.map((x) => `After: ${x}`)]) {
     if (w) console.log(yellow(`! ${w}`));
+  }
+  for (const sg of r.renameSuggestions) {
+    console.log(yellow(`! Column "${sg.from}" looks renamed to "${sg.to}" (${Math.round(sg.similarity * 100)}% match). Use --rename "${sg.from}=${sg.to}".`));
   }
   if (r.duplicates.length) console.log(yellow(`! ${r.duplicates.length} duplicate key(s) not matched: ${r.duplicates.slice(0, 5).map((d) => d.key).join(', ')}${r.duplicates.length > 5 ? ', …' : ''}`));
 
