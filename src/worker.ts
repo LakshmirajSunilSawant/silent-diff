@@ -40,7 +40,7 @@ async function handle(req: WorkerRequest): Promise<WorkerResponse> {
     }
     case 'diff': {
       if (!files.before || !files.after) throw new Error('Both files are needed.');
-      const result = diffTables(files.before.table, files.after.table, { key: req.key, normalize: req.normalize });
+      const result = diffTables(files.before.table, files.after.table, { key: req.key, normalize: req.normalize, renames: req.renames });
       return { type: 'diffed', result };
     }
   }

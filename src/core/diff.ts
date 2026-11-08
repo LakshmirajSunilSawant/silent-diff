@@ -1,6 +1,6 @@
 import { matchColumns } from './columns';
 import { myersDiff, type Edit } from './myers';
-import { ALL_NORMALIZATIONS, normalizeValue, parseNumber } from './normalize';
+import { ALL_NORMALIZATIONS, normalizeValue, parseNumber, withinTolerance } from './normalize';
 import type {
   ColumnStat,
   DiffColumn,
@@ -8,6 +8,7 @@ import type {
   DiffResult,
   DuplicateKey,
   NormalizeOptions,
+  RenameSuggestion,
   Table,
 } from './types';
 import { DEFAULT_NORMALIZE } from './types';
@@ -15,12 +16,17 @@ import { DEFAULT_NORMALIZE } from './types';
 export interface DiffOptions {
   /** Key column names (1–3), or null to align rows without a key. */
   key: string[] | null;
-  normalize?: NormalizeOptions;
+  normalize?: Partial<NormalizeOptions>;
   /** Share of cells that must match to pair a deleted and an added row as "modified" (keyless mode). */
   similarity?: number;
   /** Total work budget for keyless alignment before falling back to a set comparison. */
   alignBudget?: number;
+  /** Columns to treat as renamed: Before name → After name. */
+  renames?: Record<string, string>;
 }
+
+/** Minimum share of equal values for a removed and an added column to be suggested as a rename. */
+export const RENAME_SIMILARITY = 0.8;
 
 export const DEFAULT_SIMILARITY = 0.5;
 const PAIR_MATRIX_CAP = 250_000;
@@ -39,7 +45,7 @@ interface Ctx {
 export function diffTables(before: Table, after: Table, options: DiffOptions): DiffResult {
   const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
   const norm = { ...DEFAULT_NORMALIZE, ...options.normalize };
-  const columns = matchColumns(before, after);
+  const columns = matchColumns(before, after, options.renames);
   const shared = columns.flatMap((c, i) => (c.status === 'both' ? [i] : []));
   const nb: string[][] = [];
   const na: string[][] = [];
@@ -86,6 +92,8 @@ export function diffTables(before: Table, after: Table, options: DiffOptions): D
     core.emptyKeys.beforeRows.length +
     core.emptyKeys.afterRows.length;
 
+  const renameSuggestions = suggestRenames(ctx, core.ops);
+
   const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
   return {
     mode: key ? 'keyed' : 'keyless',
@@ -98,6 +106,7 @@ export function diffTables(before: Table, after: Table, options: DiffOptions): D
     approximate: core.approximate,
     warnings,
     normalize: norm,
+    renameSuggestions,
     elapsedMs: Math.round(t1 - t0),
   };
 }
@@ -106,9 +115,16 @@ function range(n: number): number[] {
   return Array.from({ length: n }, (_, i) => i);
 }
 
+function cellEqual(ctx: Ctx, ci: number, b: number, a: number): boolean {
+  if (ctx.nb[ci][b] === ctx.na[ci][a]) return true;
+  if (!(ctx.norm.tolerance > 0)) return false;
+  const c = ctx.columns[ci];
+  return withinTolerance(ctx.before.columns[c.bi][b], ctx.after.columns[c.ai][a], ctx.norm);
+}
+
 function compareRows(ctx: Ctx, b: number, a: number): number[] {
   const changed: number[] = [];
-  for (const ci of ctx.shared) if (ctx.nb[ci][b] !== ctx.na[ci][a]) changed.push(ci);
+  for (const ci of ctx.shared) if (!cellEqual(ctx, ci, b, a)) changed.push(ci);
   return changed;
 }
 
@@ -122,7 +138,7 @@ function rowOp(ctx: Ctx, b: number, a: number): DiffOp {
 function keyedDiff(ctx: Ctx, key: string[]) {
   const keyCols = key.map((k) => ctx.columns.find((c) => c.name === k && c.status === 'both')!);
   // Keys always ignore surrounding whitespace; case follows the user's setting.
-  const keyNorm: NormalizeOptions = { trim: true, ignoreCase: ctx.norm.ignoreCase, numeric: false, nullEqual: false };
+  const keyNorm: NormalizeOptions = { ...DEFAULT_NORMALIZE, trim: true, ignoreCase: ctx.norm.ignoreCase };
   const keyOf = (t: Table, side: 'bi' | 'ai', r: number) => {
     const parts = keyCols.map((c) => normalizeValue(t.columns[c[side]][r], keyNorm));
     return parts.every((p) => p === '') ? '' : parts.join('\u0001');
@@ -328,7 +344,7 @@ function setAlign(hb: Int32Array, ha: Int32Array): Edit[] {
 
 function similarityOf(ctx: Ctx, b: number, a: number): number {
   let same = 0;
-  for (const ci of ctx.shared) if (ctx.nb[ci][b] === ctx.na[ci][a]) same++;
+  for (const ci of ctx.shared) if (cellEqual(ctx, ci, b, a)) same++;
   return same / ctx.shared.length;
 }
 
@@ -413,6 +429,61 @@ function pairAcrossHunks(ctx: Ctx, ops: DiffOp[], threshold: number): { ops: Dif
     drop.add(delPos[i]);
   }
   return { ops: out.filter((_, i) => !drop.has(i)), moved: true };
+}
+
+// ---------------------------------------------------------------- renames (F7)
+
+/**
+ * Suggest removed/added column pairs that hold mostly the same values. When rows
+ * were matched, compare values row by row; otherwise compare the sets of values.
+ */
+function suggestRenames(ctx: Ctx, ops: DiffOp[]): RenameSuggestion[] {
+  const removed = ctx.columns.filter((c) => c.status === 'removed');
+  const added = ctx.columns.filter((c) => c.status === 'added');
+  if (!removed.length || !added.length || removed.length * added.length > 400) return [];
+
+  const matched = ops.filter((op) => op.type === 'unchanged' || op.type === 'modified');
+  const step = Math.max(1, Math.floor(matched.length / 5000));
+  const sample = matched.filter((_, i) => i % step === 0);
+  const norm = (v: string) => normalizeValue(v, ctx.norm);
+
+  const scored: RenameSuggestion[] = [];
+  for (const r of removed) {
+    const bcol = ctx.before.columns[r.bi];
+    for (const a of added) {
+      const acol = ctx.after.columns[a.ai];
+      let similarity = 0;
+      if (sample.length >= 3) {
+        let same = 0;
+        let seen = 0;
+        for (const op of sample) {
+          const x = norm(bcol[op.b]);
+          const y = norm(acol[op.a]);
+          if (!x && !y) continue;
+          seen++;
+          if (x === y) same++;
+        }
+        similarity = seen ? same / seen : 0;
+      } else {
+        const xs = new Set(bcol.map(norm).filter(Boolean));
+        const ys = new Set(acol.map(norm).filter(Boolean));
+        let common = 0;
+        for (const v of xs) if (ys.has(v)) common++;
+        similarity = Math.max(xs.size, ys.size) ? common / Math.max(xs.size, ys.size) : 0;
+      }
+      if (similarity >= RENAME_SIMILARITY) scored.push({ from: r.name, to: a.name, similarity: Math.round(similarity * 1000) / 1000 });
+    }
+  }
+  // Each column takes part in at most one suggestion, best first.
+  scored.sort((x, y) => y.similarity - x.similarity || x.from.localeCompare(y.from) || x.to.localeCompare(y.to));
+  const usedFrom = new Set<string>();
+  const usedTo = new Set<string>();
+  return scored.filter((s) => {
+    if (usedFrom.has(s.from) || usedTo.has(s.to)) return false;
+    usedFrom.add(s.from);
+    usedTo.add(s.to);
+    return true;
+  });
 }
 
 // ---------------------------------------------------------------- summary

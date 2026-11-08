@@ -24,6 +24,14 @@ export interface NormalizeOptions {
   numeric: boolean;
   /** Treat empty, null, NULL, N/A, NaN, None, nil and - as the same value. */
   nullEqual: boolean;
+  /** Compare values that look like dates by calendar date, so 2024-01-05 equals 1/5/2024. */
+  dates: boolean;
+  /** How to read ambiguous dates like 03/04/2024. */
+  dateOrder: 'MDY' | 'DMY';
+  /** Numbers within this distance count as equal. 0 turns it off. */
+  tolerance: number;
+  /** 'abs': absolute difference; 'pct': percent of the larger value. */
+  toleranceMode: 'abs' | 'pct';
 }
 
 export const DEFAULT_NORMALIZE: NormalizeOptions = {
@@ -31,6 +39,10 @@ export const DEFAULT_NORMALIZE: NormalizeOptions = {
   ignoreCase: false,
   numeric: false,
   nullEqual: false,
+  dates: false,
+  dateOrder: 'MDY',
+  tolerance: 0,
+  toleranceMode: 'abs',
 };
 
 export type ColumnStatus = 'both' | 'added' | 'removed';
@@ -43,6 +55,16 @@ export interface DiffColumn {
   bi: number;
   /** Column index in After, or -1. */
   ai: number;
+  /** Before name, when the user chose to treat a renamed column as the same column. */
+  renamedFrom?: string;
+}
+
+/** A removed and an added column that hold mostly the same values. */
+export interface RenameSuggestion {
+  from: string;
+  to: string;
+  /** Share of compared values that are equal, 0–1. */
+  similarity: number;
 }
 
 export type OpType = 'added' | 'deleted' | 'modified' | 'unchanged';
@@ -117,5 +139,7 @@ export interface DiffResult {
   approximate: boolean;
   warnings: string[];
   normalize: NormalizeOptions;
+  /** Removed/added column pairs that look like renames (F7). */
+  renameSuggestions: RenameSuggestion[];
   elapsedMs: number;
 }

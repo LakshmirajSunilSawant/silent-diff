@@ -23,14 +23,14 @@ Click **Try sample files** on the start page to see a demo diff.
 | Area | Features |
 | --- | --- |
 | Ingest | Drag and drop or file picker, Before/After with a swap button; dropping two files at once fills both. CSV/TSV with delimiter detection (comma, semicolon, tab, pipe); UTF-8, UTF-8 BOM, UTF-16 BOM and Windows-1252; `.xlsx` (first sheet, cell values not formulas); header row toggle; ragged rows padded with a warning. |
-| Columns | Matched by header name (exact, then case/space-insensitive), not position. Added and removed columns are reported and never mark rows as modified. |
+| Columns | Matched by header name (exact, then case/space-insensitive), not position. Added and removed columns are reported and never mark rows as modified. A removed and an added column holding at least 80% of the same values are suggested as a rename; one click compares them as one column (undoable). |
 | Key | Auto-detects a key column (unique and filled in both files; prefers names like id, email, sku; ignores 1..n row numbers). If confidence is low, the app stops and asks. Override with any column, or a composite key of up to 3 columns. Duplicate and empty keys are listed, not guessed. |
 | Alignment | Keyed: O(n) hash join. Keyless: Myers diff over row hashes, moved rows detected as reordering, and deleted/added rows paired as "modified" when at least 50% of cells match. Very large, very different keyless files fall back to a set comparison labelled "approximate". |
-| Normalization | Trim whitespace (default on), ignore case, compare numbers numerically (`1,000.00` = `1000`), empty = null. Values are read as text, so `07030` ≠ `7030` by default. A hint appears when most changes look like formatting. |
+| Normalization | Trim whitespace (default on), ignore case, compare numbers numerically (`1,000.00` = `1000`), empty = null, compare dates by calendar day (`2024-01-05` = `1/5/2024` = `5 Jan 2024`, with an M/D/Y or D/M/Y setting), and a numeric tolerance (absolute or %). Values are read as text, so `07030` ≠ `7030` by default. A hint appears when most changes look like formatting. |
 | Summary | One-line counts, per-column change counts, net change for numeric columns, "rows reordered" note. |
-| View | Virtualized table with sticky header and key column, `+ − ~` markers as well as colors, old → new on hover or inline, runs of unchanged rows collapsed with 3 rows of context, filters by change type and column, `n`/`p` to jump between changes, `f` to focus the filter. Color-blind palette and dark mode. |
+| View | Unified or side-by-side mode (Before and After aligned row by row). Virtualized table with sticky header and key column, `+ − ~` markers as well as colors, old → new on hover or inline, runs of unchanged rows collapsed with 3 rows of context, filters by change type and column, `n`/`p` to jump between changes, `f` to focus the filter. Color-blind palette and dark mode. |
 | Export | `.xlsx` with the same highlighting, old values as cell notes, and a Summary sheet; `.csv` with `_change` and `_changed_columns` columns. |
-| CLI | `npm run cli -- before after [--key id] [--no-key] [--json] [--numeric] …` with the same engine. Exit code 1 when files differ. |
+| CLI | `npm run cli -- before after [--key id] [--no-key] [--json] [--numeric] [--dates] [--tolerance 0.5%] [--rename old=new] …` with the same engine. Exit code 1 when files differ. |
 
 ## Privacy
 
@@ -75,10 +75,6 @@ examples/        Sample file pair for the CLI
 | 100k × 20, keyless | ~1.1 s | < 15 s |
 
 Limits: 200 MB or 1,000,000 rows per file in the browser; above that the app suggests the CLI.
-
-## Not built yet
-
-From the PRD's P2 list: suggesting renamed columns (F7), numeric tolerance and date normalization (F15), and a full side-by-side view (F22). "Show old values inline" covers part of F22.
 
 ## Deploying
 

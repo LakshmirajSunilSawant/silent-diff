@@ -8,7 +8,7 @@ export type WorkerRequest =
   | { type: 'swap' }
   | { type: 'clear'; side: Side }
   | { type: 'detect' }
-  | { type: 'diff'; key: string[] | null; normalize: NormalizeOptions };
+  | { type: 'diff'; key: string[] | null; normalize: NormalizeOptions; renames: Record<string, string> };
 
 export type WorkerResponse =
   | { type: 'parsed'; side: Side; table: Table }

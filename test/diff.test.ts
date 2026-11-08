@@ -330,3 +330,75 @@ describe('keyless move + edit', () => {
     expect(r.summary.reordered).toBe(true);
   });
 });
+
+describe('P2: dates (F15)', () => {
+  it('parses common formats', async () => {
+    const { parseDate } = await import('../src/core/normalize');
+    expect(parseDate('2024-01-05')).toBe('2024-01-05');
+    expect(parseDate('1/5/2024')).toBe('2024-01-05');
+    expect(parseDate('5/1/2024', 'DMY')).toBe('2024-01-05');
+    expect(parseDate('25/12/2024')).toBe('2024-12-25'); // day > 12 settles the order
+    expect(parseDate('5 Jan 2024')).toBe('2024-01-05');
+    expect(parseDate('January 5, 2024')).toBe('2024-01-05');
+    expect(parseDate('Fri, Jan 5 2024')).toBe('2024-01-05');
+    expect(parseDate('1/5/24')).toBe('2024-01-05');
+    expect(parseDate('2024-01-05 00:00')).toBe('2024-01-05');
+    expect(parseDate('2024-01-05T14:30:00Z')).toBe('2024-01-05T14:30:00');
+    expect(parseDate('1/5/2024 2:30 PM')).toBe('2024-01-05T14:30:00');
+    expect(parseDate('2024-02-30')).toBeNull();
+    expect(parseDate('hello')).toBeNull();
+    expect(parseDate('12345')).toBeNull();
+  });
+
+  it('dates equal only with the toggle on', () => {
+    const b = `id,when\n1,2024-01-05\n2,2024-03-04`;
+    const a = `id,when\n1,1/5/2024\n2,4/3/2024`;
+    expect(run(b, a, { key: ['id'] }).summary.modified).toBe(2);
+    expect(run(b, a, { key: ['id'], normalize: { dates: true } }).summary.modified).toBe(1);
+    // Read as D/M/Y, 1/5/2024 is 1 May, so row 1 now differs and row 2 matches.
+    const dmy = run(b, a, { key: ['id'], normalize: { dates: true, dateOrder: 'DMY' } });
+    expect(dmy.ops.filter((o) => o.type === 'modified').map((o) => o.b)).toEqual([0]);
+  });
+});
+
+describe('P2: numeric tolerance (F15)', () => {
+  const b = `id,amt\n1,100\n2,100\n3,abc`;
+  const a = `id,amt\n1,100.4\n2,103\n3,abd`;
+  it('absolute', () => {
+    const r = run(b, a, { key: ['id'], normalize: { tolerance: 0.5, toleranceMode: 'abs' } });
+    expect(r.summary.modified).toBe(2);
+    expect(r.ops.find((o) => o.b === 0)!.type).toBe('unchanged');
+  });
+  it('percent', () => {
+    const r = run(b, a, { key: ['id'], normalize: { tolerance: 5, toleranceMode: 'pct' } });
+    expect(r.summary.modified).toBe(1); // only the text change
+  });
+  it('keyless rows within tolerance are not changes', () => {
+    const r = run(`x,y\na,1.00\nb,2.00`, `x,y\na,1.001\nb,2.00`, { key: null, normalize: { tolerance: 0.01 } });
+    expect(counts(r)).toEqual({ added: 0, deleted: 0, modified: 0 });
+  });
+});
+
+describe('P2: renamed columns (F7)', () => {
+  const b = `id,phone,city\n1,555-01,Rome\n2,555-02,Oslo\n3,555-03,Kyiv\n4,555-04,Lima\n5,555-05,Pune`;
+  const a = `id,mobile,city\n1,555-01,Rome\n2,555-02,Oslo\n3,555-99,Kyiv\n4,555-04,Lima\n5,555-05,Pune`;
+  it('suggests a rename when values mostly match', () => {
+    const r = run(b, a, { key: ['id'] });
+    expect(r.renameSuggestions).toEqual([{ from: 'phone', to: 'mobile', similarity: 0.8 }]);
+  });
+  it('no suggestion below the threshold', () => {
+    const r = run(b, `id,mobile,city\n1,x,Rome\n2,y,Oslo\n3,z,Kyiv\n4,555-04,Lima\n5,w,Pune`, { key: ['id'] });
+    expect(r.renameSuggestions).toEqual([]);
+  });
+  it('accepted rename compares the columns as one', () => {
+    const r = run(b, a, { key: ['id'], renames: { phone: 'mobile' } });
+    expect(r.summary.columnsAdded).toEqual([]);
+    expect(r.summary.columnsRemoved).toEqual([]);
+    expect(r.summary.modified).toBe(1);
+    expect(r.columns.find((c) => c.name === 'mobile')!.renamedFrom).toBe('phone');
+  });
+  it('keyless rename suggestion uses value sets', () => {
+    const r = run(`p,q\nx1,1\nx2,2\nx3,3`, `p,z\nx1,1\nx2,2\nx3,3`, { key: null });
+    expect(r.renameSuggestions.map((s) => `${s.from}>${s.to}`)).toEqual(['q>z']);
+  });
+});

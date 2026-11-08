@@ -1,5 +1,5 @@
 // Demo lead lists, generated deterministically. "After" has reassigned owners,
-// status changes, a few new and removed leads, a new column and some whitespace noise.
+// status changes, a few new and removed leads, a new column, a renamed column and some whitespace noise.
 
 const FIRST = ['Ava', 'Ben', 'Chloe', 'Dev', 'Elena', 'Farah', 'Gus', 'Hana', 'Ivan', 'Jada', 'Kai', 'Lena', 'Mateo', 'Nia', 'Omar', 'Priya'];
 const LAST = ['Okafor', 'Smith', 'Tanaka', 'Rossi', 'Novak', 'Haddad', 'Silva', 'Kim', 'Petrov', 'Brown', 'Nguyen', 'Garcia'];
@@ -65,7 +65,9 @@ export function sampleFiles(): { before: File; after: File } {
   const cols: (keyof Lead)[] = ['id', 'name', 'email', 'company', 'owner', 'status', 'value', 'zip'];
   const bText = [cols.join(','), ...before.map((l) => cols.map((c) => q(l[c])).join(','))].join('\n');
   const aCols = [...cols.slice(0, 3), 'phone' as const, ...cols.slice(3)];
-  const aText = [aCols.join(','), ...after.map((l) => aCols.map((c) => q(l[c as keyof typeof l])).join(','))].join('\n');
+  // "zip" is renamed to "postal_code" in After, so the app suggests treating them as one column.
+  const aHeader = aCols.map((c) => (c === 'zip' ? 'postal_code' : c));
+  const aText = [aHeader.join(','), ...after.map((l) => aCols.map((c) => q(l[c as keyof typeof l])).join(','))].join('\n');
   return {
     before: new File([bText], 'leads_v1.csv', { type: 'text/csv' }),
     after: new File([aText], 'leads_final.csv', { type: 'text/csv' }),

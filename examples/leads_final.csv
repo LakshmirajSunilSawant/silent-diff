@@ -1,4 +1,4 @@
-id,name,email,phone,company,owner,status,value,zip
+id,name,email,phone,company,owner,status,value,postal_code
 L-1001,Elena Smith,elena.smith0@example.com,+1 555 0100,Stark Ind.,Sam,Qualified,"1,250.00",44727
 L-1002,Ben Nguyen,ben.nguyen1@example.com,+1 555 0101,Wonka,Casey,Qualified,"32,125.00",86144
 L-1003,Jada Smith,jada.smith2@example.com,+1 555 0102,Globex,Casey,Lost,"44,500.00",55050
