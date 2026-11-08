@@ -1,0 +1,121 @@
+id,name,email,company,owner,status,value,zip
+L-1001,Elena Smith,elena.smith0@example.com,Stark Ind.,Sam,Qualified,"1,250.00",44727
+L-1002,Ben Nguyen,ben.nguyen1@example.com,Wonka,Casey,Qualified,"32,125.00",86144
+L-1003,Jada Smith,jada.smith2@example.com,Globex,Casey,Lost,"44,500.00",55050
+L-1004,Chloe Silva,chloe.silva3@example.com,Initech,Casey,Won,"7,750.00",82938
+L-1005,Hana Okafor,hana.okafor4@example.com,Acme,Jordan,Won,"42,250.00",68091
+L-1006,Gus Kim,gus.kim5@example.com,Wayne Ent.,Jordan,Won,"49,500.00",44974
+L-1007,Ben Tanaka,ben.tanaka6@example.com,Hooli,Sam,Won,"29,625.00",80463
+L-1008,Gus Tanaka,gus.tanaka7@example.com,Initech,Sam,Contacted,"16,750.00",88285
+L-1009,Priya Tanaka,priya.tanaka8@example.com,Vandelay,Jordan,Qualified,"15,750.00",12935
+L-1010,Priya Smith,priya.smith9@example.com,Wonka,Casey,Qualified,"35,500.00",30666
+L-1011,Ben Silva,ben.silva10@example.com,Globex,Sam,Proposal,"34,875.00",49067
+L-1012,Dev Tanaka,dev.tanaka11@example.com,Wayne Ent.,Casey,Won,"34,875.00",83946
+L-1013,Gus Smith,gus.smith12@example.com,Globex,Jordan,Proposal,"49,375.00",42595
+L-1014,Lena Haddad,lena.haddad13@example.com,Acme,Sam,Won,"48,875.00",79969
+L-1015,Chloe Novak,chloe.novak14@example.com,Initech,Riley,Lost,"45,750.00",19757
+L-1016,Farah Silva,farah.silva15@example.com,Initech,Riley,New,"32,375.00",36667
+L-1017,Hana Rossi,hana.rossi16@example.com,Stark Ind.,Jordan,Proposal,"30,125.00",23185
+L-1018,Gus Haddad,gus.haddad17@example.com,Wonka,Sam,Lost,"47,500.00",57135
+L-1019,Omar Okafor,omar.okafor18@example.com,Initech,Jordan,Proposal,"47,625.00",97990
+L-1020,Lena Brown,lena.brown19@example.com,Umbrella,Jordan,Won,"2,500.00",33925
+L-1021,Hana Brown,hana.brown20@example.com,Wonka,Sam,Proposal,"15,125.00",64507
+L-1022,Kai Haddad,kai.haddad21@example.com,Initech,Jordan,Proposal,"1,750.00",84445
+L-1023,Lena Nguyen,lena.nguyen22@example.com,Soylent,Jordan,Lost,"49,125.00",62099
+L-1024,Mateo Okafor,mateo.okafor23@example.com,Stark Ind.,Jordan,Contacted,"37,375.00",02406
+L-1025,Priya Haddad,priya.haddad24@example.com,Umbrella,Jordan,Proposal,"1,500.00",40750
+L-1026,Jada Okafor,jada.okafor25@example.com,Globex,Sam,Contacted,"14,125.00",56056
+L-1027,Gus Garcia,gus.garcia26@example.com,Wayne Ent.,Jordan,Qualified,"35,000.00",27978
+L-1028,Omar Nguyen,omar.nguyen27@example.com,Stark Ind.,Jordan,Won,"29,500.00",27749
+L-1029,Chloe Tanaka,chloe.tanaka28@example.com,Globex,Riley,Qualified,"38,875.00",64409
+L-1030,Nia Rossi,nia.rossi29@example.com,Wayne Ent.,Riley,Qualified,"36,500.00",52316
+L-1031,Mateo Petrov,mateo.petrov30@example.com,Initech,Casey,Lost,"39,750.00",88094
+L-1032,Chloe Kim,chloe.kim31@example.com,Stark Ind.,Jordan,New,"21,875.00",05246
+L-1033,Nia Tanaka,nia.tanaka32@example.com,Umbrella,Casey,Won,"30,250.00",11865
+L-1034,Hana Silva,hana.silva33@example.com,Wonka,Sam,New,"40,875.00",96772
+L-1035,Mateo Smith,mateo.smith34@example.com,Initech,Casey,Lost,"43,625.00",85747
+L-1036,Ben Petrov,ben.petrov35@example.com,Wonka,Jordan,Proposal,"44,500.00",76191
+L-1037,Mateo Haddad,mateo.haddad36@example.com,Soylent,Sam,Qualified,"29,750.00",24062
+L-1038,Chloe Haddad,chloe.haddad37@example.com,Globex,Casey,Won,"11,375.00",23031
+L-1039,Ben Brown,ben.brown38@example.com,Wonka,Riley,Qualified,"6,125.00",10527
+L-1040,Nia Rossi,nia.rossi39@example.com,Hooli,Jordan,Qualified,"36,000.00",29561
+L-1041,Dev Garcia,dev.garcia40@example.com,Soylent,Sam,Lost,"9,250.00",30721
+L-1042,Farah Garcia,farah.garcia41@example.com,Vandelay,Riley,New,"39,250.00",43675
+L-1043,Omar Okafor,omar.okafor42@example.com,Wayne Ent.,Sam,Won,"13,875.00",25887
+L-1044,Nia Petrov,nia.petrov43@example.com,Acme,Casey,Contacted,"11,875.00",73703
+L-1045,Chloe Novak,chloe.novak44@example.com,Wonka,Casey,Qualified,"25,750.00",71522
+L-1046,Dev Okafor,dev.okafor45@example.com,Stark Ind.,Jordan,Lost,"11,750.00",38416
+L-1047,Omar Kim,omar.kim46@example.com,Initech,Casey,Lost,"33,125.00",64798
+L-1048,Priya Novak,priya.novak47@example.com,Initech,Casey,Proposal,"4,500.00",07753
+L-1049,Lena Nguyen,lena.nguyen48@example.com,Wayne Ent.,Casey,Qualified,"37,875.00",12706
+L-1050,Chloe Novak,chloe.novak49@example.com,Stark Ind.,Riley,Contacted,"2,000.00",03670
+L-1051,Mateo Novak,mateo.novak50@example.com,Hooli,Riley,Won,"19,625.00",54403
+L-1052,Nia Rossi,nia.rossi51@example.com,Stark Ind.,Sam,Proposal,"10,250.00",47426
+L-1053,Elena Garcia,elena.garcia52@example.com,Hooli,Casey,Lost,"28,125.00",82509
+L-1054,Elena Novak,elena.novak53@example.com,Vandelay,Jordan,Contacted,"27,375.00",30755
+L-1055,Priya Novak,priya.novak54@example.com,Globex,Jordan,Won,"49,500.00",55602
+L-1056,Kai Tanaka,kai.tanaka55@example.com,Vandelay,Riley,Qualified,"44,375.00",84902
+L-1057,Kai Rossi,kai.rossi56@example.com,Wayne Ent.,Sam,New,"2,500.00",73898
+L-1058,Dev Brown,dev.brown57@example.com,Hooli,Jordan,Won,"6,000.00",04881
+L-1059,Ivan Petrov,ivan.petrov58@example.com,Vandelay,Riley,Qualified,"49,625.00",28532
+L-1060,Mateo Tanaka,mateo.tanaka59@example.com,Wonka,Riley,Contacted,"14,375.00",87476
+L-1061,Mateo Rossi,mateo.rossi60@example.com,Wayne Ent.,Riley,New,"2,250.00",88019
+L-1062,Ivan Haddad,ivan.haddad61@example.com,Wonka,Riley,Lost,"6,500.00",42129
+L-1063,Hana Tanaka,hana.tanaka62@example.com,Vandelay,Riley,Lost,"16,875.00",59854
+L-1064,Ben Okafor,ben.okafor63@example.com,Soylent,Sam,Lost,"36,250.00",64665
+L-1065,Gus Tanaka,gus.tanaka64@example.com,Acme,Riley,Won,"21,625.00",16808
+L-1066,Ben Silva,ben.silva65@example.com,Stark Ind.,Riley,New,"43,375.00",06616
+L-1067,Priya Petrov,priya.petrov66@example.com,Vandelay,Casey,Contacted,"28,625.00",12792
+L-1068,Ivan Kim,ivan.kim67@example.com,Wayne Ent.,Riley,Contacted,"30,625.00",58461
+L-1069,Omar Garcia,omar.garcia68@example.com,Umbrella,Sam,Qualified,"43,000.00",88198
+L-1070,Jada Kim,jada.kim69@example.com,Umbrella,Casey,Won,"38,875.00",75003
+L-1071,Farah Haddad,farah.haddad70@example.com,Wayne Ent.,Riley,Qualified,"9,000.00",85873
+L-1072,Hana Novak,hana.novak71@example.com,Umbrella,Riley,Proposal,"48,000.00",36419
+L-1073,Ivan Rossi,ivan.rossi72@example.com,Wayne Ent.,Riley,Proposal,"7,250.00",22369
+L-1074,Kai Garcia,kai.garcia73@example.com,Globex,Jordan,Lost,"30,500.00",40579
+L-1075,Jada Novak,jada.novak74@example.com,Soylent,Jordan,Contacted,"29,125.00",91285
+L-1076,Ava Kim,ava.kim75@example.com,Globex,Jordan,New,"34,625.00",92255
+L-1077,Dev Nguyen,dev.nguyen76@example.com,Initech,Casey,Contacted,"6,500.00",72455
+L-1078,Hana Haddad,hana.haddad77@example.com,Globex,Casey,New,"16,500.00",74058
+L-1079,Omar Garcia,omar.garcia78@example.com,Umbrella,Casey,Proposal,"30,750.00",88810
+L-1080,Priya Haddad,priya.haddad79@example.com,Stark Ind.,Sam,Qualified,"12,750.00",83664
+L-1081,Ben Brown,ben.brown80@example.com,Soylent,Sam,Proposal,"41,750.00",48180
+L-1082,Nia Haddad,nia.haddad81@example.com,Stark Ind.,Jordan,Contacted,"46,250.00",83325
+L-1083,Farah Nguyen,farah.nguyen82@example.com,Soylent,Jordan,Proposal,"24,500.00",36256
+L-1084,Mateo Rossi,mateo.rossi83@example.com,Globex,Casey,New,"13,250.00",62023
+L-1085,Ivan Silva,ivan.silva84@example.com,Vandelay,Sam,Qualified,"7,375.00",45829
+L-1086,Jada Silva,jada.silva85@example.com,Soylent,Riley,Proposal,"22,500.00",39279
+L-1087,Lena Novak,lena.novak86@example.com,Soylent,Riley,Qualified,"29,750.00",42330
+L-1088,Omar Garcia,omar.garcia87@example.com,Wayne Ent.,Jordan,New,"8,500.00",73675
+L-1089,Elena Rossi,elena.rossi88@example.com,Globex,Riley,New,"20,500.00",33002
+L-1090,Dev Nguyen,dev.nguyen89@example.com,Stark Ind.,Riley,Won,"46,375.00",59979
+L-1091,Mateo Haddad,mateo.haddad90@example.com,Vandelay,Jordan,Lost,"31,875.00",32894
+L-1092,Ivan Rossi,ivan.rossi91@example.com,Stark Ind.,Riley,Proposal,"8,250.00",37494
+L-1093,Lena Rossi,lena.rossi92@example.com,Hooli,Casey,Contacted,"31,500.00",61607
+L-1094,Farah Tanaka,farah.tanaka93@example.com,Stark Ind.,Casey,Won,"48,125.00",70290
+L-1095,Elena Silva,elena.silva94@example.com,Globex,Riley,Won,"46,750.00",66535
+L-1096,Ivan Garcia,ivan.garcia95@example.com,Globex,Casey,New,"41,875.00",28392
+L-1097,Jada Haddad,jada.haddad96@example.com,Soylent,Riley,New,"9,750.00",07494
+L-1098,Gus Garcia,gus.garcia97@example.com,Stark Ind.,Casey,Proposal,"8,125.00",79188
+L-1099,Ava Nguyen,ava.nguyen98@example.com,Wayne Ent.,Sam,Lost,"46,125.00",60389
+L-1100,Ivan Haddad,ivan.haddad99@example.com,Initech,Riley,Lost,"14,375.00",21483
+L-1101,Omar Smith,omar.smith100@example.com,Soylent,Sam,Lost,"14,250.00",60195
+L-1102,Ava Petrov,ava.petrov101@example.com,Acme,Jordan,Proposal,"38,375.00",41944
+L-1103,Lena Smith,lena.smith102@example.com,Soylent,Sam,Qualified,"7,250.00",12154
+L-1104,Omar Smith,omar.smith103@example.com,Initech,Casey,Lost,"34,875.00",76572
+L-1105,Kai Rossi,kai.rossi104@example.com,Soylent,Sam,Lost,"20,125.00",11206
+L-1106,Dev Nguyen,dev.nguyen105@example.com,Wonka,Riley,Qualified,"1,625.00",99341
+L-1107,Priya Garcia,priya.garcia106@example.com,Umbrella,Casey,Qualified,"14,500.00",29236
+L-1108,Gus Smith,gus.smith107@example.com,Wayne Ent.,Sam,Proposal,"29,875.00",67667
+L-1109,Farah Silva,farah.silva108@example.com,Globex,Jordan,Lost,"34,500.00",14228
+L-1110,Mateo Okafor,mateo.okafor109@example.com,Soylent,Riley,Lost,"15,000.00",11153
+L-1111,Priya Tanaka,priya.tanaka110@example.com,Hooli,Sam,Lost,"4,125.00",00962
+L-1112,Dev Novak,dev.novak111@example.com,Wayne Ent.,Sam,Lost,"14,625.00",87193
+L-1113,Jada Smith,jada.smith112@example.com,Initech,Sam,New,"47,000.00",15827
+L-1114,Omar Haddad,omar.haddad113@example.com,Wayne Ent.,Sam,Lost,"39,625.00",26022
+L-1115,Ben Petrov,ben.petrov114@example.com,Wayne Ent.,Casey,New,"1,625.00",74789
+L-1116,Elena Petrov,elena.petrov115@example.com,Initech,Sam,Qualified,"10,500.00",79607
+L-1117,Jada Tanaka,jada.tanaka116@example.com,Stark Ind.,Jordan,New,"25,000.00",79941
+L-1118,Chloe Garcia,chloe.garcia117@example.com,Wonka,Casey,Lost,"28,000.00",54976
+L-1119,Gus Haddad,gus.haddad118@example.com,Hooli,Jordan,Contacted,"20,500.00",22467
+L-1120,Elena Petrov,elena.petrov119@example.com,Wonka,Jordan,Contacted,"6,125.00",84092

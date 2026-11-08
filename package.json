@@ -1,0 +1,35 @@
+{
+  "name": "silent-diff",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Compare two CSV/TSV/XLSX files in the browser. Nothing is uploaded.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "cli": "tsx src/cli.ts",
+    "bench": "tsx test/bench.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.14.26",
+    "exceljs": "^4.4.0",
+    "papaparse": "^5.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
+  }
+}
